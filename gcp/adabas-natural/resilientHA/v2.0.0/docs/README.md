@@ -101,11 +101,12 @@ This setup extends the distributed architecture by introducing high availability
 - Use OS Config and VM Manager for patching and automation.
 
 ## Diagram Reference
-This setup is visually represented in the provided architecture diagram (`Adabas and Natural on GCP Resilient HA-v2.0.0.gif`). The diagram shows:
+This setup is visually represented in the provided architecture diagram (`Adabas and Natural on GCP Resilient HA - Detailed Security-v2.0.0.gif`) in the `docs` folder. The diagram shows:
 - Compute Engine instances hosting Adabas and Natural across multiple zones
 - Persistent Disks attached for persistent storage
 - Cloud Load Balancing distributing application traffic
-- Firewall rule boundaries
+- Firewall rule boundaries and network segmentation between layers
+- IAM service accounts and encryption controls for secure access
 - VPC/subnets for network isolation and redundancy
 
 ## Intended Use
