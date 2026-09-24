@@ -47,7 +47,7 @@ In addition to the single-instance setup, this repository also supports a distri
 
 ### Deployment
 
-- Use the provided Terraform scripts to define multiple Compute Engine instances, firewall rules, and subnets.
+- Use the provided `gcloud` scripts to define multiple Compute Engine instances, firewall rules, and subnets.
 - Configure firewall rules to allow only necessary traffic between the Natural and Adabas instances.
 - Attach and format Persistent Disks for each instance as required.
 
@@ -116,50 +116,29 @@ This setup is visually represented in the architecture diagrams provided in the 
 This architecture is intended for development and prototyping. For production or high availability, consider the advanced or resilient HA architectures provided in this repository.
 
 ---
-## Automating Provisioning with Terraform
+## Automating Provisioning
 
-You can automate the entire infrastructure provisioning for this architecture using Terraform scripts provided in the `parameters` and `templates` folders. Terraform enables you to define infrastructure as code, making deployments repeatable, version-controlled, and easy to update.
+This architecture can be provisioned with `gcloud` CLI deployment scripts placed in the `scripts` folder. The scripts are intended to create the network, firewall rules, service account, disks, and Compute Engine instance(s) in a repeatable, parameterized way.
 
-### Key Concepts
-- **Terraform Modules**: Reusable building blocks for Compute Engine, Persistent Disks, Firewall Rules, IAM service accounts, and networking.
-- **Variables**: Parameterize your deployment (machine type, disk size, VPC ID, etc.) for flexibility.
-- **State Management**: Terraform tracks resources in a state file, allowing safe updates and destruction.
-- **Outputs**: Automatically display important information (instance IP, Persistent Disk IDs, etc.) after deployment.
+### Suggested Workflow
+1. **Configure**
+   - Set your deployment parameters (`PROJECT_ID`, trusted SSH CIDRs — never use `0.0.0.0/0`, machine type, disk sizes) and the topology (`single` or `distributed`).
 
-### Example Workflow
-1. **Configure Variables**
-   - Edit the variable files in the `parameters` folder to match your environment and requirements.
+2. **Authenticate**
+   - Run `gcloud auth login` and ensure the target project has billing and the Compute Engine API enabled.
 
-2. **Initialize Terraform**
-   - Run `terraform init` in the `templates` directory to download required providers and modules.
+3. **Deploy**
+   - Run the deployment script to create the VPC, subnet, Cloud NAT, firewall rules, service account, data Persistent Disk, and instance(s).
 
-3. **Plan Deployment**
-   - Run `terraform plan -var-file=../parameters/dev.tfvars` to preview changes.
+4. **Tear Down**
+   - Run the cleanup script to delete the deployment.
 
-4. **Apply Deployment**
-   - Run `terraform apply -var-file=../parameters/dev.tfvars` to create all resources automatically.
-
-5. **Access Outputs**
-   - Terraform will display instance details, external IP, and other outputs for easy access.
-
-### What Gets Automated
+### What Should Be Automated
 - Compute Engine instance creation and configuration
-- Persistent Disk creation, attachment, and mounting
-- Firewall rule setup
+- Persistent Disk creation, attachment, and mounting (via a VM startup script)
+- Firewall rule setup (least privilege, tag scoped)
 - IAM service account assignment
-- VPC and subnet configuration
-- (Optional) Cloud Storage bucket for backups
-
-### Customization
-You can extend the Terraform scripts to:
-- Add more instances or environments
-- Integrate with CI/CD pipelines
-- Automate software installation using startup scripts or provisioners
-- Schedule backups and monitoring
+- VPC, subnet, and Cloud NAT configuration
 
 ---
-For more details, see the installation scripts and parameter files in the `scripts` and `parameters` folders.
 This architecture is intended for development and prototyping. For production or high availability, consider the advanced or resilient HA architectures provided in this repository.
-
----
-For more details, see the installation scripts and parameter files in the `scripts` and `parameters` folders.

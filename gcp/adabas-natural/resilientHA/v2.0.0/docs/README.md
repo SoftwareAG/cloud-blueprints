@@ -43,7 +43,7 @@ This setup extends the distributed architecture by introducing high availability
 - **High Availability:** No single point of failure; resilient to instance or zone outages.
 - **Performance:** Load balancer distributes traffic for optimal resource usage.
 - **Security:** Network and IAM controls for each layer.
-- **Operational Efficiency:** Automated provisioning and scaling with Terraform.
+- **Operational Efficiency:** Automated provisioning and scaling with the `gcloud` deployment scripts.
 
 ### Deployment Steps (HA)
 1. **Provision VPC and Subnets across Multiple Zones**
@@ -53,7 +53,7 @@ This setup extends the distributed architecture by introducing high availability
 5. **Attach Persistent Disks to each node**
 6. **Configure Firewall Rules for each layer and the load balancer**
 7. **Set up IAM service accounts and monitoring**
-8. **Automate with Terraform scripts**
+8. **Automate with the provided `gcloud` scripts**
 
 ### Use Cases
 - Production workloads requiring high availability and fault tolerance
@@ -113,47 +113,27 @@ This setup is visually represented in the provided architecture diagram (`Adabas
 This architecture is intended for production workloads requiring high availability. For simpler development setups, see the basic architecture, or for cloud-native container deployments, see the advanced architecture provided in this repository.
 
 ---
-## Automating Provisioning with Terraform
+## Automating Provisioning
 
-You can automate the entire infrastructure provisioning for this architecture using Terraform scripts provided in the `parameters` and `templates` folders. Terraform enables you to define infrastructure as code, making deployments repeatable, version-controlled, and easy to update.
+This architecture can be provisioned with `gcloud` CLI deployment scripts placed in the `scripts` folder. The scripts are intended to create the network, firewall rules, service account, the autoscaled Natural managed instance group with its load balancer, and the per-zone Adabas nodes in a repeatable, parameterized way.
 
-### Key Concepts
-- **Terraform Modules**: Reusable building blocks for Compute Engine, Persistent Disks, Firewall Rules, IAM service accounts, Cloud Load Balancing, and networking.
-- **Variables**: Parameterize your deployment (machine type, disk size, VPC ID, zones, etc.) for flexibility.
-- **State Management**: Terraform tracks resources in a state file, allowing safe updates and destruction.
-- **Outputs**: Automatically display important information (instance IPs, load balancer IP, Persistent Disk IDs, etc.) after deployment.
+### Suggested Workflow
+1. **Configure**
+   - Set your deployment parameters (`PROJECT_ID`, trusted SSH CIDRs — never use `0.0.0.0/0`, machine types, replica counts, disk sizes) and provide at least two zones for high availability.
 
-### Example Workflow
-1. **Configure Variables**
-   - Edit the variable files in the `parameters` folder to match your environment and requirements.
+2. **Authenticate**
+   - Run `gcloud auth login` and ensure the target project has billing and the Compute Engine API enabled.
 
-2. **Initialize Terraform**
-   - Run `terraform init` in the `templates` directory to download required providers and modules.
+3. **Deploy**
+   - Run the deployment script to create the VPC, subnet, Cloud NAT, firewall rules, service account, Natural instance template + regional MIG + autoscaler + external load balancer, and the Adabas nodes with data disks.
 
-3. **Plan Deployment**
-   - Run `terraform plan -var-file=../parameters/prod.tfvars` to preview changes.
+4. **Tear Down**
+   - Run the cleanup script to delete the deployment.
 
-4. **Apply Deployment**
-   - Run `terraform apply -var-file=../parameters/prod.tfvars` to create all resources automatically.
-
-5. **Access Outputs**
-   - Terraform will display instance details, load balancer IP, and other outputs for easy access.
-
-### What Gets Automated
+### What Should Be Automated
 - Compute Engine instance creation and configuration across zones
-- Persistent Disk creation, attachment, and mounting
-- Firewall rule setup
+- Autoscaled Natural managed instance group and external load balancer
+- Persistent Disk creation, attachment, and mounting (via a VM startup script)
+- Firewall rule setup (least privilege, including Google health-check ranges)
 - IAM service account assignment
-- Cloud Load Balancing and backend service configuration
-- VPC and subnet configuration
-- (Optional) Cloud Storage bucket for backups
-
-### Customization
-You can extend the Terraform scripts to:
-- Add more instances or environments
-- Integrate with CI/CD pipelines
-- Automate software installation using startup scripts or provisioners
-- Schedule backups and monitoring
-
----
-For more details, see the installation scripts and parameter files in the `scripts` and `parameters` folders.
+- VPC, subnet, and Cloud NAT configuration
