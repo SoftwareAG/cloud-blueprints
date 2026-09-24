@@ -10,7 +10,12 @@ cloud-blueprints/
  │         ├── basic/
  │         ├── resilient/
  │         └── advance/
- └── azure/
+ ├── azure/
+ │    └── adabas-natural/
+ │         ├── basic/
+ │         ├── resilient/
+ │         └── advance/
+ └── gcp/
       └── adabas-natural/
            ├── basic/
            ├── resilient/
@@ -30,7 +35,7 @@ cloud-blueprints/
 
 These blueprints help you:
 
-Standardize Adabas & Natural deployments on AWS and Azure
+Standardize Adabas & Natural deployments on AWS, Azure, and GCP
 
 Accelerate lift-and-shift and modernization efforts
 
