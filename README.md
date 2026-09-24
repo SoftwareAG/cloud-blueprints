@@ -29,9 +29,9 @@ trusted workloads on cloud infrastructure.
 cloud-blueprints/
 ├── aws/
 │   └── adabas-natural/
-│       ├── basic/         └── v2.0.0/   (README + docs, parameters, scripts, templates)
-│       ├── resilientHA/   └── v2.0.0/   (README + docs, parameters, scripts, templates)
-│       └── advance/       └── v2.0.0/   (README + docs, manifests, parameters, scripts, templates)
+│       ├── basic/         └── v2.0.0/   (README + docs)
+│       ├── resilientHA/   └── v2.0.0/   (README + docs)
+│       └── advance/       └── v2.0.0/   (README + docs)
 ├── azure/
 │   └── adabas-natural/
 │       ├── basic/         └── v2.0.0/
@@ -46,14 +46,10 @@ cloud-blueprints/
 
 Every blueprint is versioned (e.g. `v2.0.0`) and contains:
 
-| Folder        | Contents                                                             |
-| ------------- | ------------------------------------------------------------------- |
-| `README.md`   | Architecture overview: layers, cloud resources, and security model. |
-| `docs/`       | Annotated architecture diagrams for each variant.                   |
-| `manifests/`  | Placeholder for Kubernetes manifests (Advanced blueprint only).     |
-| `parameters/` | Placeholder for environment-specific configuration values.          |
-| `scripts/`    | Placeholder for provisioning/automation assets.                     |
-| `templates/`  | Placeholder for Infrastructure-as-Code templates.                   |
+| Item        | Contents                                                            |
+| ----------- | ------------------------------------------------------------------ |
+| `README.md` | Architecture overview: layers, cloud resources, and security model.|
+| `docs/`     | Annotated architecture diagrams for each variant.                  |
 
 ---
 
