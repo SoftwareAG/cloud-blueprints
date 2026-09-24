@@ -32,7 +32,7 @@ This architecture describes an advanced deployment of Adabas and Natural on Goog
 ## Deployment Steps
 
 1. **Provision GKE Cluster**
-   - Use Terraform or gcloud CLI to create a GKE cluster with worker nodes across multiple zones.
+   - Use the `gcloud` CLI to create a GKE cluster with worker nodes across multiple zones.
    - Configure networking (VPC, subnets, firewall rules).
 
 2. **Configure Storage**
@@ -55,8 +55,8 @@ This architecture describes an advanced deployment of Adabas and Natural on Goog
    - Deploy Prometheus and Grafana for metrics.
    - Integrate with Cloud Operations for logs and alerts.
 
-7. **Automate with Terraform**
-   - Use provided Terraform scripts to automate cluster, storage, and workload provisioning.
+7. **Automate with Scripts**
+   - Use `gcloud` and `kubectl` scripts to automate cluster, storage, and workload provisioning.
 
 ## Advanced Features
 - **Backup & Restore**: Automate database backups to Cloud Storage using Kubernetes CronJobs and Workload Identity.
