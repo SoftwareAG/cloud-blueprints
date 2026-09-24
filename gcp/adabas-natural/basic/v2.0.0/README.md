@@ -96,12 +96,21 @@ In addition to the single-instance setup, this repository also supports a distri
 - Use OS Config and VM Manager for patching and automation.
 
 ## Diagram Reference
-This setup is visually represented in the provided architecture diagram (`Adabas and Natural on GCP Basic Setup Development Single Instance-v2.0.0.gif`). The diagram shows:
-- Compute Engine instance hosting Adabas and Natural
-- Persistent Disks attached for persistent storage
-- Firewall rule boundaries
-- Optional external IP for public access
-- VPC/subnet for network isolation
+This setup is visually represented in the architecture diagrams provided in the `docs` folder:
+
+- **`Adabas and Natural on GCP Basic Setup Development Single Instance-v2.0.0.gif`** – single Compute Engine instance hosting both Adabas and Natural, showing:
+   - Compute Engine instance hosting Adabas and Natural
+   - Persistent Disks attached for persistent storage
+   - Firewall rule boundaries
+   - Optional external IP for public access
+   - VPC/subnet for network isolation
+
+- **`Adabas and Natural on GCP Basic Setup Distributed-v2.0.0.gif`** – distributed setup with Adabas and Natural on separate Compute Engine instances, showing:
+   - Dedicated Adabas and Natural Compute Engine instances
+   - Persistent Disks attached to each instance
+   - Separate firewall rules and subnets per layer
+   - Controlled network access between the Natural and Adabas instances
+   - VPC/subnets for network isolation
 
 ## Intended Use
 This architecture is intended for development and prototyping. For production or high availability, consider the advanced or resilient HA architectures provided in this repository.
