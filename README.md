@@ -62,7 +62,7 @@ Every blueprint is versioned (e.g. `v3.0.0`) and contains:
 | Item        | Contents                                                                         |
 | ----------- | -------------------------------------------------------------------------------- |
 | `README.md` | Architecture overview: network layout, layers, cloud resources, security model. |
-| `docs/`     | Architecture diagrams (`.gif`) and, for most diagrams, the editable draw.io source (`.drawio`). |
+| `docs/`     | Architecture diagrams (`.gif`) for each variant.                                 |
 
 ---
 
@@ -223,8 +223,8 @@ government, healthcare, and manufacturing** running core systems on Adabas & Nat
    availability and scaling needs.
 3. **Open the versioned README** – e.g. `azure/adabas-natural/resilientHA/v3.0.0/README.md`
    for the network layout, layers, and security guidance.
-4. **Review the diagrams** – see the `docs/` folder; open the `.drawio` source in
-   draw.io to adapt a diagram to your environment.
+4. **Review the diagrams** – see the `docs/` folder for the architecture
+   diagrams of each variant.
 5. **Provision and install** – build the described cloud resources and install the
    Adabas and Natural components following your organization's standards.
 
