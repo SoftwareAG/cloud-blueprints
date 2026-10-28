@@ -144,7 +144,6 @@ the loss of a zone leaves the API, online, and database services running.
 ## Architecture Diagrams
 See the `docs` folder:
 - `Adabas and Natural on Azure - AKS-v3.0.0.gif`
-- `Adabas and Natural on Azure - AKS-v3.0.0.drawio` (editable source)
 
 ## Intended Use
 Production, QA, and advanced development environments needing scalability,

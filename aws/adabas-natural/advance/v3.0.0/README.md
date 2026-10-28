@@ -174,7 +174,6 @@ capacity in all three zones.
 ## Architecture Diagrams
 See the `docs` folder:
 - `Adabas and Natural on AWS - EKS-v3.0.0.gif`
-- `Adabas and Natural on AWS - EKS-v3.0.0.drawio` (editable source)
 
 ## Intended Use
 Production, QA, and advanced development environments needing scalability,

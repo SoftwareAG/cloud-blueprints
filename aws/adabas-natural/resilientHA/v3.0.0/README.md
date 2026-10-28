@@ -147,7 +147,6 @@ both channels.
 ## Architecture Diagrams
 See the `docs` folder:
 - `Adabas and Natural on AWS - Resilient HA-v3.0.0.gif`
-- `Adabas and Natural on AWS - Resilient HA-v3.0.0.drawio` (editable source)
 
 ## Intended Use
 Production workloads requiring high availability, business continuity, disaster

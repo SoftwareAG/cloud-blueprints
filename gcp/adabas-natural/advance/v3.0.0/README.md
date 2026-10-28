@@ -182,7 +182,6 @@ and node pools must have capacity in all three zones (use a StorageClass with
 ## Architecture Diagrams
 See the `docs` folder:
 - `Adabas and Natural on GCP - GKE-v3.0.0.gif`
-- `Adabas and Natural on GCP - GKE-v3.0.0.drawio` (editable source)
 
 ## Intended Use
 Production, QA, and advanced development environments needing scalability,

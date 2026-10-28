@@ -113,8 +113,6 @@ See the `docs` folder:
 - `Adabas and Natural on AWS - Basic Development v3.0.0.gif`
 - `Adabas and Natural on AWS - Basic Distributed v3.0.0.gif`
 
-Editable draw.io sources (`.drawio`) sit next to each diagram.
-
 ## Intended Use
 Development, prototyping, API enablement pilots, and small production workloads. For
 high availability and fault tolerance, use the Resilient HA blueprint; for
