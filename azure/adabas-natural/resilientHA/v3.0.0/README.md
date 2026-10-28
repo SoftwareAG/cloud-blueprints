@@ -65,10 +65,15 @@ both channels.
 ## Cloud & Security Resources
 - **Azure Virtual Machines (Multi-Zone)** – API, application, and data nodes
   distributed across Availability Zones.
-- **Azure Load Balancer** – distributes traffic to healthy Natural OpenAPI Server and
-  Natural nodes.
-- **Azure Application Gateway / WAF (optional)** – TLS termination and web
-  application firewall for public HTTPS API traffic.
+- **Azure Application Gateway + WAF** – HTTPS entry point in the hub VNet; TLS
+  termination and web application firewall in front of the Natural OpenAPI Server and
+  Natural Availability Server VMs.
+- **Azure Load Balancer (internal)** – distributes calls from the web tier to healthy
+  Natural Subprogram Server and Natural Web/IO VMs.
+- **Azure Bastion & Jumphost** – administrative access to the Adabas Manager and the
+  workload VMs without public IPs.
+- **Azure Cache for Redis** – shared session state for the Natural Availability
+  Server instances.
 - **Azure API Management (optional)** – API gateway, throttling, and developer portal
   in front of the Natural OpenAPI Server.
 - **Azure Managed Disks** – encrypted persistent storage for each node.
@@ -85,8 +90,7 @@ both channels.
   and data layers.
 
 ## Architecture Diagrams
-See the `docs` folder (v3.0.0 diagrams to be added):
-- `Adabas and Natural on Azure - Resilient HA-v3.0.0.gif`
+See the `docs` folder:
 - `Adabas and Natural on Azure - Resilient HA - Detailed Security-v3.0.0.gif`
 
 ## Intended Use

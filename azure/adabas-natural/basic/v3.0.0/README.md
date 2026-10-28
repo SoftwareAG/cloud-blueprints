@@ -74,10 +74,9 @@ by remote callers.
   Blob Storage for backups, Key Vault for certificates).
 
 ## Architecture Diagrams
-See the `docs` folder (v3.0.0 diagrams to be added):
-- `Adabas and Natural on Azure - Basic Setup Development Single Instance-v3.0.0.gif`
-- `Adabas and Natural on Azure - Basic Setup Distributed-v3.0.0.gif`
-- `Adabas and Natural on Azure - Basic Setup Prod Single Instance-v3.0.0.gif`
+See the `docs` folder:
+- `Adabas and Natural on Azure - Basic Development v3.0.0.gif`
+- `Adabas and Natural on Azure - Basic Distributed v3.0.0.gif`
 
 ## Intended Use
 Development, prototyping, API enablement pilots, and small production workloads. For
