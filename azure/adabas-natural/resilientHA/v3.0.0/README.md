@@ -25,6 +25,9 @@ machines.
   serves the subprogram calls coming from the API layer.
 - **Data layer (Adabas):** Adabas VMs in separate Availability Zones with
   replication/clustering for database resilience, backed by dedicated Managed Disks.
+- **Management (Adabas Manager):** a dedicated VM that connects to every Adabas
+  node (primary and secondaries) to monitor and administer the database. It has no
+  public ingress and is not published through the Application Gateway.
 
 ## Key New Products
 
@@ -67,11 +70,14 @@ both channels.
   distributed across Availability Zones.
 - **Azure Application Gateway + WAF** – HTTPS entry point in the hub VNet; TLS
   termination and web application firewall in front of the Natural OpenAPI Server and
-  Natural Availability Server VMs.
+  Natural Availability Server VMs. Adabas Manager is not exposed through it.
 - **Azure Load Balancer (internal)** – distributes calls from the web tier to healthy
   Natural Subprogram Server and Natural Web/IO VMs.
-- **Azure Bastion & Jumphost** – administrative access to the Adabas Manager and the
-  workload VMs without public IPs.
+- **Azure Bastion & Jumphost** – the administrative path into the workload: Bastion
+  reaches the Adabas Manager VM and the Jumphost without public IPs.
+- **Azure Private DNS Zones** – private name resolution for internal endpoints.
+  Administrators on the customer network can also reach Adabas Manager privately by
+  its Private DNS name over ExpressRoute or VPN.
 - **Azure Cache for Redis** – shared session state for the Natural Availability
   Server instances.
 - **Azure API Management (optional)** – API gateway, throttling, and developer portal
