@@ -62,8 +62,16 @@ by remote callers.
 - **Azure Virtual Machines** – compute hosting the API, application, and data layers.
 - **Azure Managed Disks** – persistent storage for Adabas data and Natural files;
   enable encryption at rest.
-- **Virtual Network (VNet) & Subnets** – private network boundary; place each layer
-  in its own subnet where the layers are separated.
+- **Hub-and-spoke Virtual Networks (VNet) & Subnets** – the hub VNet holds the shared
+  connectivity and security services and is peered with the spoke VNet that runs the
+  workload. In the Distributed shape each VM sits in its own subnet.
+- **Azure Application Gateway + WAF** – HTTPS entry point in the hub VNet, in front of
+  the Natural OpenAPI Server.
+- **Azure Bastion** – administrative access without public IPs. In the Distributed
+  shape Bastion reaches only the data VM, where Adabas Manager runs; in the
+  Development shape it reaches the single VM.
+- **ExpressRoute / VPN** – private connectivity from the customer network into
+  Azure.
 - **Network Security Groups (NSG)** – layer-scoped firewalls. Restrict SSH/RDP to
   trusted ranges, allow HTTPS to the Natural OpenAPI Server only from approved
   clients, and allow the Adabas ports only from the Natural layer.
