@@ -26,7 +26,8 @@ the Adabas (data) and Natural (application) components on those virtual machines
   session affinity in **Azure Cache for Redis** (zone-redundant), so a session keeps
   working when it lands on the other NAS instance.
 - **Ingress:** Azure Application Gateway + WAF (v2, zone-redundant) in the hub VNet
-  is the public HTTPS entry point, in front of both services. API calls are
+  is the public HTTPS entry point for browser, mobile, and API clients, in front of
+  both services. API calls are
   authenticated with OIDC through Microsoft Entra ID. Internal and admin traffic
   from the customer network comes in privately over ExpressRoute / VPN.
 
@@ -50,8 +51,8 @@ the Adabas (data) and Natural (application) components on those virtual machines
 - **Failover:** if the primary fails, a secondary takes over. Natural's Adabas client
   locates the new primary, so Natural reconnects without configuration changes.
 - **Natural Batch** – installed on every Data VM but active on one node at a time
-  (the primary's VM in the diagram); another node takes over on failover. Each Data VM needs a Natural installation and
-  licence for this.
+  (the primary's VM in the diagram); another node takes over on failover. Each Data
+  VM needs a Natural installation and licence for this.
 
 ### Management (Mgmt subnet, zone 3)
 
