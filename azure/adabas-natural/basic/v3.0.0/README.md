@@ -31,9 +31,10 @@ A workspace for developers and internal teams. Every layer runs on one VM.
   the Natural Development Server (NDV) alongside Adabas (with AEL), the Adabas Rest
   Server, and Adabas Manager. Adabas data sits on Standard SSD managed disks, which
   are enough for development I/O at lower cost.
-- **No public ingress:** there is no Application Gateway. Users call the Natural
-  OpenAPI Server over HTTPS, developers use terminal emulation over SSH and NaturalONE
-  (NJX, VS Code) over SSL/TLS to NDV – all privately through ExpressRoute / VPN.
+- **No public ingress:** there is no Application Gateway. Internal users and testers
+  call the Natural OpenAPI Server over HTTPS, developers use terminal emulation over
+  SSH and NaturalONE (NJX, VS Code) over SSL/TLS to NDV – all privately through
+  ExpressRoute / VPN.
 - **No OIDC:** API access is limited by the private network and NSG rules.
 - **Admin access:** Azure Bastion to the VM.
 - Not for production.
@@ -51,9 +52,12 @@ required.
   Adabas data sits on Premium SSD managed disks. Natural Batch needs its own Natural
   installation and licence on this VM.
 - **Public ingress:** Azure Application Gateway (WAF_v2) in the hub VNet is the public
-  HTTPS entry point, in front of the Natural OpenAPI Server and NAS. API calls are
-  authenticated with OIDC through Microsoft Entra ID.
+  HTTPS entry point for browser, mobile, and API clients, in front of the Natural
+  OpenAPI Server and NAS. API calls are authenticated with OIDC through Microsoft
+  Entra ID.
 - **Private traffic:** internal and admin traffic comes in through ExpressRoute / VPN.
+- **Inside the Application VM:** the Natural OpenAPI Server calls the Natural
+  Subprogram Server, and NAS calls the Natural Web I/O Server (Natural internal calls).
 - **Application to data:** the Application VM reads and writes Adabas over
   **ADATCP/S**.
 - **Admin access:** Azure Bastion to both VMs – the Application VM for patching,
