@@ -95,7 +95,7 @@ The Resilient HA architecture on managed Kubernetes (**Amazon EKS**, **Azure AKS
 
 - **Ingress.** AWS Load Balancer Controller (ALB with AWS WAF), Application Gateway Ingress Controller (Application Gateway with WAF) or GKE Gateway (internal Application Load Balancer with Cloud Armor). Each provides one endpoint for the Natural OpenAPI Server and one for the Natural Availability Server.
 - **`adanat-web` namespace.** Natural OpenAPI Server and Natural Availability Server Deployments. This is the only namespace exposed through the ingress.
-- **`adanat` namespace.** Natural Subprogram Server, Natural Web I/O Server and Adabas Manager pods, plus a 3-replica Adabas **StatefulSet** with one pod per zone on zonal persistent volumes. On AWS and Azure, Natural Batch runs as a single-replica Deployment or CronJob. On GCP it runs as one Natural Batch pod per zone, co-located with the Adabas pods.
+- **`adanat` namespace.** Natural Subprogram Server, Natural Web I/O Server and Adabas Manager pods, plus a 3-replica Adabas **StatefulSet** with one pod per zone on zonal persistent volumes. Natural Batch runs as a single pod, a one-replica Deployment or a CronJob, against the Adabas primary. Kubernetes reschedules it if it fails.
 - **Platform controls.** Private cluster API endpoint, network policies between tiers, topology spread across zones, workload identity for pod access to cloud services, and secrets mounted through the Secrets Store CSI driver.
 
 > The Advanced blueprints describe the target platform and workload layout using standard Kubernetes objects: Deployments, StatefulSets, Services and network policies. They do not depend on a Kubernetes operator.

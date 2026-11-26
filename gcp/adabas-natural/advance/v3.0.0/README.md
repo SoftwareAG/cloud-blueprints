@@ -3,8 +3,9 @@
 ## Overview
 The Advanced blueprint runs Adabas & Natural as containers on Google Kubernetes
 Engine (GKE) across three zones of one region. It is intended for scalable, resilient
-production workloads on Kubernetes. It follows the v3.0.0 Resilient HA reference
-architecture, with the Compute Engine VMs replaced by Kubernetes workloads. Customers
+production workloads on Kubernetes. It is based on the v3.0.0 Resilient HA reference
+architecture, with the Compute Engine VMs replaced by Kubernetes workloads and Natural
+Batch running as a single pod that Kubernetes reschedules. Customers
 provision the GKE cluster and supporting resources shown in the diagram and deploy the
 official Software AG Adabas and Natural container images.
 
@@ -70,13 +71,13 @@ checks in the host project.
   Compute Engine Persistent Disk CSI driver with a CMEK-enabled StorageClass. The
   primary handles reads and writes over **ADATCP/S** and synchronizes to the
   secondaries, which serve reads.
-- **Natural Batch (`adanat` namespace):** runs in its own pods, separate from the
-  Adabas pods but placed next to them — one Natural Batch pod per zone, co-located
-  with that zone's Adabas pod (pod affinity). The pod in zone `-a` is the **primary**
-  and runs batch jobs against the Adabas primary; the pods in zones `-b` and `-c` are
-  **failover** instances that take over if the primary batch pod or its zone is lost.
-  Keeping batch in separate pods lets it be scaled, scheduled, and restarted without
-  touching the database pods.
+- **Natural Batch (`adanat` namespace):** a single Natural Batch pod (a single-replica
+  Deployment, or a CronJob for scheduled jobs), separate from the Adabas pods, that
+  runs batch jobs against the Adabas primary. The diagram shows it in zone `-a` next to
+  `adabas-0`, the current primary. If the pod, its node, or its zone is lost,
+  Kubernetes reschedules it, and Natural's Adabas client locates the current primary.
+  Keeping batch in its own pod lets it be scheduled and restarted without touching the
+  database pods.
 
 ### Namespaces
 - **`adanat-web`** – the web-facing tier: Natural OpenAPI Server and Natural
