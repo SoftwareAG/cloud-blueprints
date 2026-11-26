@@ -14,14 +14,6 @@ Engine VMs.
 - **Natural Subprogram Server** – hosts and runs Natural subprograms on behalf of
   remote callers. It runs on its own VMs in two zones, so API calls survive the loss of
   a single VM or zone.
-- **Natural Availability Server** – multiple VMs sharing session state through
-  Memorystore.
-- **Separate endpoints per product** – the load balancer publishes one host name for
-  the Natural OpenAPI Server and one for the Natural Availability Server, each with its
-  own backend service.
-- **Shared VPC network** – a host project owns the VPC network, subnets, firewall
-  policies, Cloud NAT, and hybrid connectivity; the workload runs in a separate
-  service project.
 
 ## Network Layout
 - **Customer access:** client traffic arrives from the customer network over Cloud
@@ -82,8 +74,10 @@ changes to the Natural code.
 - **Active-active instances:** each API call is handled independently, so every VM
   in the backend service can serve traffic at the same time.
 - **Zone resilience:** VMs in three zones keep the API available if a zone is lost.
-- **Secure by default:** HTTPS for transport and OIDC for authentication, integrated
-  with Cloud Identity, Workforce Identity Federation, or another OIDC provider.
+- **Secure by default:** HTTPS for transport. The server does not authenticate
+  callers itself: it passes the caller's OIDC bearer token (from Cloud Identity,
+  Workforce Identity Federation, or another OIDC provider) with each call to the
+  Natural Subprogram Server.
 - **Integration ready:** can sit behind an API management gateway of the customer's
   choice for rate limiting, versioning, and a developer portal.
 
@@ -97,6 +91,8 @@ by remote callers.
   processes, separate from interactive Natural sessions.
 - **Elastic capacity:** add VMs or server processes to scale API throughput without
   changing the application.
+- **Authentication and impersonation:** validates the caller's token passed on by the
+  Natural OpenAPI Server and runs each subprogram as the impersonated Natural user.
 - **Consistent security:** Natural Security rules apply to subprograms run through the
   server, just as they do for online users.
 
@@ -146,5 +142,5 @@ See the `docs` folder:
 ## Intended Use
 Production workloads requiring high availability, business continuity, disaster
 recovery, and highly available API access to Natural business logic. For simpler
-development setups use the Basic blueprint; for container-native scaling use the
+development setups use the Basic blueprint; for scaling on Kubernetes use the
 Advanced blueprint.

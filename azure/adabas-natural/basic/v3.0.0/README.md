@@ -53,8 +53,8 @@ required.
   installation and licence on this VM.
 - **Public ingress:** Azure Application Gateway (WAF_v2) in the hub VNet is the public
   HTTPS entry point for browser, mobile, and API clients, in front of the Natural
-  OpenAPI Server and NAS. API calls are authenticated with OIDC through Microsoft
-  Entra ID.
+  OpenAPI Server and NAS. API callers present OIDC bearer tokens from Microsoft
+  Entra ID, which the Natural Subprogram Server validates.
 - **Private traffic:** internal and admin traffic comes in through ExpressRoute / VPN.
 - **Inside the Application VM:** the Natural OpenAPI Server calls the Natural
   Subprogram Server, and NAS calls the Natural Web I/O Server (Natural internal calls).
@@ -77,9 +77,10 @@ changes to the Natural code.
   OpenAPI specification that client teams can use to generate code and test.
 - **No code changes:** existing business logic stays in Natural. The server maps the
   subprogram parameters to JSON request and response bodies.
-- **Secure transport and identity:** HTTPS for transport; supports OIDC for
-  authentication with Microsoft Entra ID or another OIDC provider (used in the
-  Distributed variant).
+- **Secure transport and identity:** HTTPS for transport. The server does not
+  authenticate callers itself: it passes the caller's OIDC bearer token (from
+  Microsoft Entra ID or another OIDC provider) with each call to the Natural
+  Subprogram Server (used in the Distributed variant).
 - **Integration ready:** can sit behind Azure API Management or another gateway for
   rate limiting, versioning, and a developer portal.
 
@@ -94,6 +95,9 @@ by remote callers.
   over **ADATCP/S**, like any other Natural workload.
 - **Independent sizing:** the number of server processes can be tuned to API demand
   without affecting online users.
+- **Authentication and impersonation:** validates the caller's token passed on by the
+  Natural OpenAPI Server and runs each subprogram as the impersonated Natural user,
+  with Natural Security applied.
 
 ## Cloud & Security Resources
 
@@ -171,4 +175,4 @@ NAS – Natural Availability Server.
 | Distributed  | INT, UAT, QA; production where HA is not required  | Yes (WAF_v2)   | No |
 
 For high availability and fault tolerance, use the Resilient HA blueprint; for
-container-native scaling, use the Advanced blueprint.
+scaling on Kubernetes, use the Advanced blueprint.

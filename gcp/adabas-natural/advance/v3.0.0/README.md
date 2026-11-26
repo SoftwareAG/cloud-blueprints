@@ -2,8 +2,8 @@
 
 ## Overview
 The Advanced blueprint runs Adabas & Natural as containers on Google Kubernetes
-Engine (GKE) across three zones of one region. It is intended for scalable, resilient,
-cloud-native production workloads. It follows the v3.0.0 Resilient HA reference
+Engine (GKE) across three zones of one region. It is intended for scalable, resilient
+production workloads on Kubernetes. It follows the v3.0.0 Resilient HA reference
 architecture, with the Compute Engine VMs replaced by Kubernetes workloads. Customers
 provision the GKE cluster and supporting resources shown in the diagram and deploy the
 official Software AG Adabas and Natural container images.
@@ -13,16 +13,6 @@ official Software AG Adabas and Natural container images.
   by OpenAPI, deployed as multiple replicas across zones.
 - **Natural Subprogram Server** – runs Natural subprograms on behalf of the Natural
   OpenAPI Server, deployed as its own multi-replica Deployment.
-- **Natural Availability Server** – multiple replicas sharing session state through
-  Memorystore.
-- **Internal Application Load Balancer as ingress** – created by the GKE Gateway
-  controller (`gke-l7-rilb` GatewayClass), with a Cloud Armor policy, as the single
-  HTTPS entry point, with a separate endpoint for each product: one for the Natural
-  OpenAPI Server and one for the Natural Availability Server.
-- **3-zone Adabas cluster** – a 3-node Adabas cluster with one pod per zone.
-- **Shared VPC network** – a host project owns the VPC network, subnets, firewall
-  policies, Cloud NAT, and hybrid connectivity; the GKE cluster runs in a separate
-  service project.
 
 ## Network Layout
 - **Customer access:** client traffic arrives from the customer network over Cloud
@@ -116,8 +106,10 @@ and node pools must have capacity in all three zones (use a StorageClass with
 - Runs active-active: each API call is handled independently, so every replica
   behind the Service can serve traffic. Scale with replicas or a Horizontal Pod
   Autoscaler.
-- HTTPS at the internal Application Load Balancer and OIDC authentication with Cloud
-  Identity, Workforce Identity Federation, or another OIDC provider.
+- HTTPS at the internal Application Load Balancer. The server does not authenticate
+  callers itself: it passes the caller's OIDC bearer token (from Cloud Identity,
+  Workforce Identity Federation, or another OIDC provider) with each call to the
+  Natural Subprogram Server.
 
 ### Natural Subprogram Server
 - Runs the Natural subprograms requested through the Natural OpenAPI Server, in its
@@ -125,7 +117,9 @@ and node pools must have capacity in all three zones (use a StorageClass with
 - Replicas in two zones, reached through an internal Kubernetes Service, so the API
   tier still has a healthy target if a zone is lost. Add a replica in zone `-c` if the
   API workload needs capacity in all three zones.
-- Natural Security rules apply to subprograms run through the server.
+- Authenticates each API call: validates the caller's token passed on by the Natural
+  OpenAPI Server and runs the subprogram as the impersonated Natural user, with
+  Natural Security rules applied.
 
 ### Natural Availability Server
 - Web front end for Natural online applications, running as multiple replicas behind
@@ -185,6 +179,6 @@ See the `docs` folder:
 
 ## Intended Use
 Production, QA, and advanced development environments needing scalability,
-zone-level resilience, API access to Natural business logic, and cloud-native
+zone-level resilience, API access to Natural business logic, and Kubernetes-based
 operations. For non-containerized deployments use the Basic or Resilient HA
 blueprints.

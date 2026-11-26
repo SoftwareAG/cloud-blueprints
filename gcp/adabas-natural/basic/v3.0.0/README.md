@@ -13,9 +13,6 @@ provision the Google Cloud resources shown in the diagrams and install the Adaba
 - **Natural Subprogram Server** – hosts and runs Natural subprograms on behalf of
   remote callers such as the Natural OpenAPI Server, separating API traffic from
   interactive Natural sessions.
-- **Shared VPC network** – a host project owns the VPC network, subnets, firewall
-  policies, Cloud NAT, and hybrid connectivity; the Adabas & Natural VMs run in a
-  separate service project attached to it.
 
 ## Network Layout
 - **Customer access:** all client traffic (HTTPS, and SSH / SSL/TLS for developers in
@@ -40,7 +37,8 @@ project – the diagram shows it with the other shared ingress components.
 
 ## Architecture Layers
 - **API layer (Natural OpenAPI Server):** publishes selected Natural subprograms as
-  OpenAPI-described REST services over **HTTPS**, secured with OIDC. Client traffic
+  OpenAPI-described REST services over **HTTPS**. Callers present OIDC bearer tokens,
+  which the Natural Subprogram Server validates. Client traffic
   reaches it through the internal Application Load Balancer and Cloud Armor.
 - **Application layer (Natural):** the Natural runtime and applications, plus the
   **Natural Subprogram Server** that runs the subprograms behind each API call.
@@ -68,8 +66,10 @@ changes to the Natural code.
   OpenAPI specification that client teams can use to generate code and test.
 - **No code changes:** existing business logic stays in Natural. The server maps the
   subprogram parameters to JSON request and response bodies.
-- **Secure by default:** HTTPS for transport and OIDC for authentication, integrated
-  with Cloud Identity, Workforce Identity Federation, or another OIDC provider.
+- **Secure by default:** HTTPS for transport. The server does not authenticate
+  callers itself: it passes the caller's OIDC bearer token (from Cloud Identity,
+  Workforce Identity Federation, or another OIDC provider) with each call to the
+  Natural Subprogram Server.
 - **Integration ready:** can sit behind an API management gateway of the customer's
   choice for rate limiting, versioning, and a developer portal.
 
@@ -83,6 +83,9 @@ by remote callers.
   over **ADATCP/S**, like any other Natural workload.
 - **Independent sizing:** the number of server processes can be tuned to API demand
   without affecting online users.
+- **Authentication and impersonation:** validates the caller's token passed on by the
+  Natural OpenAPI Server and runs each subprogram as the impersonated Natural user,
+  with Natural Security applied.
 
 ## Cloud & Security Resources
 - **Compute Engine** – VMs hosting the API, application, and data layers.
@@ -121,4 +124,4 @@ See the `docs` folder:
 ## Intended Use
 Development, prototyping, API enablement pilots, and small production workloads. For
 high availability and fault tolerance, use the Resilient HA blueprint; for
-container-native scaling, use the Advanced blueprint.
+scaling on Kubernetes, use the Advanced blueprint.

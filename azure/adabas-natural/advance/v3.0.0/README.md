@@ -4,9 +4,10 @@
 
 The Advanced blueprint runs Adabas & Natural as containers on Azure Kubernetes
 Service (AKS) across three Availability Zones in one region, in a hub-and-spoke
-network. It is intended for scalable, resilient, cloud-native production workloads.
-It follows the v3.0.0 Resilient HA reference architecture, with the virtual machines
-replaced by Kubernetes workloads. Customers provision the AKS cluster and supporting
+network. It is intended for scalable, resilient production workloads on Kubernetes.
+It is based on the v3.0.0 Resilient HA reference architecture, with the virtual machines
+replaced by Kubernetes workloads, the web and app tiers running in all three zones
+instead of two, and Natural Batch running as a Deployment that Kubernetes reschedules. Customers provision the AKS cluster and supporting
 resources shown in the diagram and deploy the official Software AG Adabas and Natural
 container images.
 
@@ -16,14 +17,6 @@ container images.
   by OpenAPI, deployed as replicas in all three zones.
 - **Natural Subprogram Server** – runs Natural subprograms on behalf of the Natural
   OpenAPI Server, deployed as its own Deployment behind its own Service.
-- **Natural Availability Server** – replicas in all three zones, with Natural session
-  affinity kept in Azure Cache for Redis.
-- **Application Gateway as ingress** – Azure Application Gateway + WAF, managed by the
-  Application Gateway Ingress Controller (AGIC), is the single public HTTPS entry
-  point, with one endpoint for the Natural OpenAPI Server and one for the Natural
-  Availability Server.
-- **3-zone Adabas cluster** – a 3-pod Adabas cluster StatefulSet with one pod per
-  Availability Zone and SYNC replication between all three pods.
 
 ## Reference Architecture
 
@@ -116,15 +109,18 @@ Both run one replica per zone, so every tier keeps a healthy target if a zone is
 - Exposed through its own Service (`natural-openapi`) and gateway endpoint.
 - Runs active-active: each API call is handled independently, so every replica can
   serve traffic. Scale with replicas or a Horizontal Pod Autoscaler.
-- HTTPS at the Application Gateway and OIDC authentication with Microsoft Entra ID
-  or another OIDC provider.
+- HTTPS at the Application Gateway. The server does not authenticate callers itself:
+  it passes the caller's OIDC bearer token (from Microsoft Entra ID or another OIDC
+  provider) with each call to the Natural Subprogram Server.
 
 ### Natural Subprogram Server
 
 - Runs the Natural subprograms requested through the Natural OpenAPI Server, in its
   own Deployment, separate from interactive Natural workloads.
 - One replica per zone behind the `natural-subprogram` Service.
-- Natural Security rules apply to subprograms run through the server.
+- Authenticates each API call: validates the caller's token passed on by the Natural
+  OpenAPI Server and runs the subprogram as the impersonated Natural user, with
+  Natural Security rules applied.
 
 ### Natural Availability Server
 
@@ -210,10 +206,7 @@ and recovery point objectives with the business.
 
 See the `docs` folder:
 
-- `Adabas and Natural on Azure - Advanced AKS v3.0.0.gif` – the current reference
-  architecture.
-- `Adabas and Natural on Azure - AKS-v3.0.0.gif` – earlier version, kept for
-  reference.
+- `Adabas and Natural on Azure - Advanced AKS v3.0.0.gif` – the reference architecture.
 
 Abbreviations: AEL – Adabas Encryption for Linux; NAS – Natural Availability Server;
 AGIC – Application Gateway Ingress Controller.
@@ -221,6 +214,6 @@ AGIC – Application Gateway Ingress Controller.
 ## Intended Use
 
 Production, QA, and advanced development environments needing scalability,
-zone-level resilience, API access to Natural business logic, and cloud-native
+zone-level resilience, API access to Natural business logic, and Kubernetes-based
 operations. For non-containerized deployments use the Basic or Resilient HA
 blueprints.

@@ -27,8 +27,8 @@ the Adabas (data) and Natural (application) components on those virtual machines
   working when it lands on the other NAS instance.
 - **Ingress:** Azure Application Gateway + WAF (v2, zone-redundant) in the hub VNet
   is the public HTTPS entry point for browser, mobile, and API clients, in front of
-  both services. API calls are
-  authenticated with OIDC through Microsoft Entra ID. Internal and admin traffic
+  both services. API callers present OIDC bearer tokens from Microsoft Entra ID,
+  which the Natural Subprogram Server validates. Internal and admin traffic
   from the customer network comes in privately over ExpressRoute / VPN.
 
 ### App tier (App subnet, zones 1 and 2)
@@ -79,8 +79,9 @@ changes to the Natural code.
   instance behind the Application Gateway can serve traffic at the same time.
 - **Zone resilience:** instances in two Availability Zones keep the API available if a
   zone is lost.
-- **Secure by default:** HTTPS for transport and OIDC for authentication, integrated
-  with Microsoft Entra ID or another OIDC provider.
+- **Secure by default:** HTTPS for transport. The server does not authenticate
+  callers itself: it passes the caller's OIDC bearer token (from Microsoft Entra ID or
+  another OIDC provider) with each call to the Natural Subprogram Server.
 - **Integration ready:** Azure API Management can optionally be added in front for
   throttling, versioning, and a developer portal (not shown in the diagram).
 
@@ -95,6 +96,8 @@ by remote callers.
   processes, separate from interactive Natural sessions.
 - **Elastic capacity:** add App VMs or server processes to scale API throughput
   without changing the application.
+- **Authentication and impersonation:** validates the caller's token passed on by the
+  Natural OpenAPI Server and runs each subprogram as the impersonated Natural user.
 - **Consistent security:** Natural Security rules apply to subprograms run through the
   server, just as they do for online users.
 
@@ -173,10 +176,7 @@ business.
 
 See the `docs` folder:
 
-- `Adabas and Natural on Azure - Resilient HA v3.0.0.gif` – the current reference
-  architecture.
-- `Adabas and Natural on Azure - Resilient HA - Detailed Security-v3.0.0.gif` –
-  earlier detailed-security view, kept for reference.
+- `Adabas and Natural on Azure - Resilient HA v3.0.0.gif` – the reference architecture.
 
 Abbreviations: AEL – Adabas Encryption for Linux; NAS – Natural Availability Server.
 
@@ -185,4 +185,4 @@ Abbreviations: AEL – Adabas Encryption for Linux; NAS – Natural Availability
 Production workloads requiring high availability and highly available API access to
 Natural business logic, with optional regional redundancy through Azure Site Recovery.
 For development and test stages, or production without HA, use the Basic blueprint;
-for container-native scaling, use the Advanced blueprint.
+for scaling on Kubernetes, use the Advanced blueprint.

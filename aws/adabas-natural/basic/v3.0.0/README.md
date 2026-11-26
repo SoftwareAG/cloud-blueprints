@@ -1,59 +1,79 @@
 # Adabas & Natural on AWS – Basic
 
 ## Overview
-The Basic blueprint runs Adabas & Natural on Amazon EC2 instances. It is intended for
-development, prototyping, and lift-and-shift workloads. Customers provision the AWS
-resources shown in the diagrams and install the Adabas (data) and Natural
-(application) components on those instances.
+
+The Basic blueprint runs Adabas & Natural on Amazon EC2 in a hub-and-spoke network:
+a hub VPC for shared connectivity and security services, connected through AWS
+Transit Gateway to a workload VPC. It covers development, prototyping, test stages
+(INT, UAT, QA), and lift-and-shift workloads that do not need high availability.
+Customers provision the AWS resources shown in the diagrams and install the Adabas
+(data) and Natural (application) components on those instances.
 
 ## What's New in v3.0.0
+
 - **Natural OpenAPI Server** – exposes Natural subprograms as REST endpoints described
   by OpenAPI, so modern applications, portals, and integration platforms can call
   Natural business logic over HTTPS.
 - **Natural Subprogram Server** – hosts and runs Natural subprograms on behalf of
   remote callers such as the Natural OpenAPI Server, separating API traffic from
   interactive Natural sessions.
-- **Hub-and-spoke network** – a network hub VPC holds the shared ingress and inspection
-  components (internal Application Load Balancer, AWS Network Firewall, VPC interface
-  endpoints) and is connected to the workload VPC through AWS Transit Gateway. The
-  regional services that serve the hub – Transit Gateway, AWS WAF, Route 53, Systems
-  Manager Session Manager, and the optional Amazon API Gateway – are shown with it.
 
-## Network Layout
-- **Customer access:** all client traffic (HTTPS, and SSH / SSL/TLS for developers in
-  the Development shape) arrives from the customer network over AWS Direct Connect or
-  Site-to-Site VPN and the Transit Gateway. Nothing is exposed to the internet: the
-  Application Load Balancer is internal and no Internet Gateway or public IPs are used.
-- **Hub VPC:** internal Application Load Balancer with AWS WAF, AWS Network Firewall,
-  and VPC interface endpoints shared through Route 53 private hosted zones.
-- **Workload VPC:** private subnets only – one for the Development instance, or
-  separate app and data subnets in the Distributed shape – each with a layer-scoped
-  security group. An S3 gateway endpoint in the workload VPC carries backup traffic
-  to Amazon S3 (gateway endpoints serve only their own VPC).
+## Reference Architectures
 
-## Architecture Layers
-- **API layer (Natural OpenAPI Server):** publishes selected Natural subprograms as
-  OpenAPI-described REST services over **HTTPS**, secured with OIDC. Client traffic
-  reaches it through the internal Application Load Balancer and AWS WAF in the hub VPC.
-- **Application layer (Natural):** the Natural runtime and applications, plus the
-  **Natural Subprogram Server** that runs the subprograms behind each API call.
-  Reachable by end users on the Natural/application ports.
-- **Data layer (Adabas):** the Adabas database and its files, held on dedicated
-  Amazon EBS volumes.
+The Basic blueprint has two variants. Both use the same hub-and-spoke network and the
+same shared services; they differ in how many instances run the workload and how
+users reach it.
 
-The Basic blueprint supports three shapes:
-- **Development – Single Instance:** all layers, including the Natural OpenAPI Server
-  and the Natural Subprogram Server, co-located on one EC2 instance for simplicity.
-- **Distributed:** the Adabas and Natural layers run on separate EC2 instances, each
-  in its own private subnet, so each layer can be sized, secured, and maintained
-  independently. The Natural OpenAPI Server and the Natural Subprogram Server run
-  alongside Natural on the application instance.
-- **Production – Single Instance:** a single hardened EC2 instance for small
-  production footprints, with the API endpoint published only over HTTPS.
+### Development – Single EC2 Instance
+
+A workspace for developers and internal teams. Every layer runs on one EC2 instance.
+
+- **Development EC2 instance:** Natural OpenAPI Server, Natural Subprogram Server,
+  Natural, and the Natural Development Server (NDV) alongside Adabas (with AEL), the
+  Adabas Rest Server, and Adabas Manager. Adabas data sits on encrypted EBS gp3
+  volumes, which are enough for development I/O at lower cost.
+- **No public ingress:** there is no load balancer. Internal users and testers call
+  the Natural OpenAPI Server over HTTPS, developers use terminal emulation over SSH
+  and NaturalONE (NJX, VS Code) over SSL/TLS to NDV – all privately through AWS Direct
+  Connect / Site-to-Site VPN.
+- **No OIDC:** API access is limited by the private network and security groups.
+- **Admin access:** AWS Systems Manager Session Manager – no bastion host, open SSH
+  port from the internet, or public IP.
+- Not for production.
+
+### Distributed – App EC2 Instance and Data EC2 Instance
+
+The Adabas and Natural layers run on separate instances, so each can be sized,
+secured, and maintained on its own. Suited to INT, UAT, and QA, or to production where
+HA is not required.
+
+- **App EC2 instance:** Natural OpenAPI Server with the Natural Subprogram Server
+  behind it; Natural Availability Server (NAS) with the Natural Web I/O Server behind
+  it; Natural Security and the Natural runtime underneath both.
+- **Data EC2 instance:** Adabas (with AEL), Adabas Rest Server, Adabas Manager, and
+  Natural Batch. Adabas data sits on encrypted EBS volumes (gp3, or io2 for heavy
+  I/O). Natural Batch needs its own Natural installation and licence on this instance.
+- **Public ingress:** an internet-facing Application Load Balancer with AWS WAF in the
+  hub VPC is the public HTTPS entry point for browser, mobile, and API clients, in
+  front of the Natural OpenAPI Server and NAS (IP targets across the Transit Gateway).
+  API callers present OIDC bearer tokens from IAM Identity Center or another OIDC
+  provider, which the Natural Subprogram Server validates.
+- **Private traffic:** internal and admin traffic comes in through Direct Connect /
+  Site-to-Site VPN.
+- **Inside the App EC2 instance:** the Natural OpenAPI Server calls the Natural
+  Subprogram Server, and NAS calls the Natural Web I/O Server (Natural internal calls).
+- **App to data:** the App EC2 instance reads and writes Adabas over **ADATCP/S**.
+- **Admin access:** SSM Session Manager to both instances – the App instance for
+  patching, Natural deployment, and NAS / Web I/O configuration; the Data instance for
+  Adabas Manager.
+- **Single instance:** every layer runs once. NAS keeps session state in memory, so no
+  external session store is needed. Each instance sits in its own private subnet with
+  a layer-scoped security group.
 
 ## Key New Products
 
 ### Natural OpenAPI Server
+
 The Natural OpenAPI Server turns existing Natural subprograms into REST APIs without
 changes to the Natural code.
 
@@ -61,12 +81,15 @@ changes to the Natural code.
   OpenAPI specification that client teams can use to generate code and test.
 - **No code changes:** existing business logic stays in Natural. The server maps the
   subprogram parameters to JSON request and response bodies.
-- **Secure by default:** HTTPS for transport and OIDC for authentication, integrated
-  with AWS IAM Identity Center, Amazon Cognito, or another OIDC provider.
-- **Integration ready:** can sit behind Amazon API Gateway or another gateway for
-  rate limiting, versioning, and a developer portal.
+- **Secure transport and identity:** HTTPS for transport. The server does not
+  authenticate callers itself: it passes the caller's OIDC bearer token (from IAM
+  Identity Center or another OIDC provider) with each call to the Natural Subprogram
+  Server (used in the Distributed variant).
+- **Integration ready:** can sit behind Amazon API Gateway for throttling, versioning,
+  and usage plans.
 
 ### Natural Subprogram Server
+
 The Natural Subprogram Server is the runtime that runs Natural subprograms requested
 by remote callers.
 
@@ -76,44 +99,78 @@ by remote callers.
   over **ADATCP/S**, like any other Natural workload.
 - **Independent sizing:** the number of server processes can be tuned to API demand
   without affecting online users.
+- **Authentication and impersonation:** validates the caller's token passed on by the
+  Natural OpenAPI Server and runs each subprogram as the impersonated Natural user,
+  with Natural Security applied.
 
 ## Cloud & Security Resources
-- **Amazon EC2** – compute hosting the API, application, and data layers.
-- **Amazon EBS (gp3 / io2)** – persistent storage for Adabas data and Natural files;
-  encrypted at rest with **AWS KMS** keys.
-- **Hub & workload VPCs with AWS Transit Gateway** – private network boundary; the
-  workload layers sit in private subnets of the workload VPC, the shared ingress and
-  inspection components in the hub VPC.
-- **Application Load Balancer (internal) + AWS WAF** – HTTPS entry point and web
-  application firewall in front of the Natural OpenAPI Server.
-- **AWS Network Firewall** – inspection of traffic between the customer network, the
-  hub, and the workload VPC.
-- **VPC endpoints** – interface endpoints in the hub VPC for AWS service APIs; an S3
-  gateway endpoint in the workload VPC.
-- **Security Groups** – layer-scoped firewalls. Allow HTTPS to the Natural OpenAPI
-  Server only from the load balancer, and the Adabas ports only from the Natural
-  layer. SSH and NDV (SSL/TLS) ports are opened only to developer ranges in the
-  customer network, and only in the Development shape; administrators use Session
-  Manager instead of SSH.
+
+### Network hub – VPC & regional services
+
+- **Application Load Balancer + AWS WAF (internet-facing)** – Distributed only; the
+  public HTTPS entry point in front of the Natural OpenAPI Server and NAS.
+- **AWS Network Firewall** – inspects and controls traffic between the hub, the
+  workload VPC, and the internet.
+- **AWS Transit Gateway + Site-to-Site VPN** – connects the customer network (with
+  Direct Connect) and the hub and workload VPCs.
 - **AWS Systems Manager Session Manager** – administrative access to the instances
-  without bastion hosts, open SSH ports, or public IPs.
-- **AWS IAM Identity Center / Amazon Cognito (OIDC)** – identity provider for API
-  authentication; **AWS Directory Service** for LDAP/S where Natural Security uses it.
-- **AWS Secrets Manager & AWS Certificate Manager** – TLS certificates and secrets
-  used by the Natural OpenAPI Server.
-- **IAM Roles (instance profiles)** – least-privilege access from instances to AWS
-  services (e.g. Amazon S3 for backups, Secrets Manager for certificates).
-- **AWS Direct Connect / Site-to-Site VPN** – private connectivity from the customer
-  network into the Transit Gateway.
-- **Amazon CloudWatch, AWS Backup, Amazon GuardDuty, VPC Flow Logs** – monitoring,
-  backup, threat detection, and network logging.
+  without bastion hosts or public IPs.
+- **Amazon Route 53** – private hosted zones for internal names and VPC endpoints; the
+  Distributed variant also needs a public hosted zone for the ALB hostname.
+- **VPC endpoints** – interface endpoints for Secrets Manager, KMS, SSM, and CloudWatch,
+  and a gateway endpoint for S3, so traffic to AWS services stays private.
+
+### Workload VPC
+
+- **Amazon EC2** – one instance (Development) or an App and a Data instance
+  (Distributed), in one Availability Zone, in private subnets.
+- **Security groups** – layer-scoped firewalls. Allow HTTPS to the Natural OpenAPI
+  Server and NAS only from the ALB or approved clients, the Adabas ports only from the
+  Natural layer, and no inbound SSH from the internet (SSM is used instead).
+
+### Shared services
+
+- **AWS Secrets Manager + ACM** – TLS certificates and secrets for the Natural OpenAPI
+  Server and NAS.
+- **Amazon S3** – backups and file exchange, reached through the S3 gateway endpoint.
+- **Amazon CloudWatch & CloudWatch Logs** – metrics, logs, and alarms.
+- **AWS Backup** – instance and EBS snapshot backup and restore.
+- **Amazon EBS** – persistent storage for Adabas data and Natural files: gp3 in the
+  Development variant, gp3 or io2 in the Distributed variant.
+- **AWS KMS** – customer-managed keys for EBS, S3, and Secrets Manager encryption.
+- **VPC Flow Logs** – Distributed only; network traffic logs.
+- **Amazon GuardDuty** – threat detection.
+
+### Tools & identity
+
+- **IaC (Terraform / CloudFormation)** – provisions the resources above.
+- **AWS CodePipeline** – Distributed only; build and release pipelines, deploying to
+  the instances through SSM.
+- **IAM Identity Center (OIDC)** – Distributed only; identity provider for API
+  authentication.
+- **AWS Directory Service (LDAP/S)** – directory for OS and Natural Security user
+  authentication.
+- **IAM roles** – least-privilege access from the instances to AWS services (e.g. S3
+  for backups, Secrets Manager for certificates).
 
 ## Architecture Diagrams
+
 See the `docs` folder:
-- `Adabas and Natural on AWS - Basic Development v3.0.0.gif`
-- `Adabas and Natural on AWS - Basic Distributed v3.0.0.gif`
+
+- `Adabas and Natural on AWS - Basic Development v3.0.0.gif` – single EC2 instance,
+  private access only.
+- `Adabas and Natural on AWS - Basic Distributed v3.0.0.gif` – App and Data EC2
+  instances, public HTTPS through an internet-facing ALB + AWS WAF.
+
+Abbreviations: AEL – Adabas Encryption for Linux; NDV – Natural Development Server;
+NAS – Natural Availability Server.
 
 ## Intended Use
-Development, prototyping, API enablement pilots, and small production workloads. For
-high availability and fault tolerance, use the Resilient HA blueprint; for
-container-native scaling, use the Advanced blueprint.
+
+| Variant      | Typical use                                        | Public ingress   | HA |
+|--------------|----------------------------------------------------|------------------|----|
+| Development  | Developer workspaces, prototyping, API pilots      | No               | No |
+| Distributed  | INT, UAT, QA; production where HA is not required  | Yes (ALB + WAF)  | No |
+
+For high availability and fault tolerance, use the Resilient HA blueprint; for
+scaling on Kubernetes, use the Advanced blueprint.
